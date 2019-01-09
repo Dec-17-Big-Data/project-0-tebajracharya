@@ -1,15 +1,11 @@
 package com.revature.bankservices;
 
-import java.util.Date;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Scanner;
-
 import com.revature.JdbcBank.JdbcDao;
 import com.revature.JdbcBank.Transaction;
 import com.revature.JdbcBank.User;
-import com.revature.JdbcBank.UserApplication;
 import com.revature.JdbcBank.UserOracle;
 import com.revature.JdbcBank.Account;
 
@@ -17,7 +13,7 @@ public class JdbcServices {
 
 	private static JdbcServices jdbcService;
 	
-	private Scanner scanner;
+	private Scanner scanner = new Scanner(System.in);
 
 	final static JdbcDao jdbcDao = UserOracle.getDao();
 	
@@ -37,32 +33,32 @@ public class JdbcServices {
 		return jdbcDao.getAllUsers();
 	}
 
-	public Optional<List<User>> checkUserExist(String username, String password) {
+	public Optional<User> checkUserExist(String username, String password) {
 		return jdbcDao.checkUserExist(username, password);
 	}
 
-	public Optional<Integer> createUser() {
-		System.out.println("Enter Firstname:");
+	public Optional<User> createUser() {
+		System.out.print("Enter Firstname: ");
 		String firstname = scanner.nextLine(); // Read user input
 
-		System.out.println("Enter Lastname:");
+		System.out.print("Enter Lastname: ");
 		String lastname = scanner.nextLine(); // Read user input
 
-		System.out.println("Enter a username: ");
+		System.out.print("Enter a username: ");
 		String usrname = scanner.nextLine(); // Read user input
 
-		System.out.println("Enter password: ");
+		System.out.print("Enter password: ");
 		String usrPassword = scanner.nextLine();
 
 		return jdbcDao.createUser(firstname, lastname, usrname, usrPassword);
 
 	}
 
-	public boolean updateUser(int userId) {
+	public Boolean updateUser(int userId) {
 		return jdbcDao.updateUser(userId);
 	}
 	
-	public boolean deleteUser(int userId) {
+	public Boolean deleteUser(int userId) {
 		return jdbcDao.deleteUser(userId);
 	}
 	
@@ -84,5 +80,9 @@ public class JdbcServices {
 
 	public Optional<List<Account>> accountBalance(int bankAccountId) {
 		return jdbcDao.accountBalance(bankAccountId);
+	}
+
+	public Optional<List<Transaction>> viewTransactions(int bankAccId) {
+		return jdbcDao.viewTransactions(bankAccId);
 	}
 }

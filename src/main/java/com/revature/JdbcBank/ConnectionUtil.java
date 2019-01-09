@@ -33,14 +33,13 @@ public class ConnectionUtil {
 
 			// get the connection
 			Class.forName("oracle.jdbc.driver.OracleDriver");
-			Connection con = null;
 
 			String endpoint = props.getProperty("jdbc.url");
 			String username = props.getProperty("jdbc.username");
 			String password = props.getProperty("jdbc.password");
 
-			con = DriverManager.getConnection(endpoint, username, password);
-			return con;
+			connectionInstance = DriverManager.getConnection(endpoint, username, password);
+			return connectionInstance;
 		} catch (Exception e) {
 			log.error("unable to get connection to database");
 		} finally {

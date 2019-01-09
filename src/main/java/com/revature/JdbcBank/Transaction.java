@@ -4,10 +4,10 @@ import java.util.Date;
 
 public class Transaction {
 
-	private int transactionId;
-	private int bankAccountId;
+	private Integer transactionId;
+	private Integer bankAccountId;
 	private String transactionType;
-	private double transactionAmt;
+	private Double transactionAmt;
 	private Date transactionTime; 
 	
 	public Transaction() {
@@ -17,17 +17,17 @@ public class Transaction {
 		return transactionId;
 	}
 	
-	public Transaction(int transactionId, int bankAccountId, String transactionType, double transactionAmt,
-			Date transactionTime) {
+	public Transaction(Integer transactionId, Integer bankAccountId, String transactionType, Double transactionAmt,
+			Date currentTime) {
 		super();
 		this.transactionId = transactionId;
 		this.bankAccountId = bankAccountId;
 		this.transactionType = transactionType;
 		this.transactionAmt = transactionAmt;
-		this.transactionTime = transactionTime;
+		this.transactionTime = currentTime;
 	}
 
-	public void setTransactionId(int transactionId) {
+	public void setTransactionId(Integer transactionId) {
 		this.transactionId = transactionId;
 	}
 
@@ -35,7 +35,7 @@ public class Transaction {
 		return bankAccountId;
 	}
 
-	public void setBankAccountId(int bankAccountId) {
+	public void setBankAccountId(Integer bankAccountId) {
 		this.bankAccountId = bankAccountId;
 	}
 
@@ -51,7 +51,7 @@ public class Transaction {
 		return transactionAmt;
 	}
 
-	public void setTransactionAmt(double transactionAmt) {
+	public void setTransactionAmt(Double transactionAmt) {
 		this.transactionAmt = transactionAmt;
 	}
 

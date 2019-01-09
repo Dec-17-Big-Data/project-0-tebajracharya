@@ -38,17 +38,17 @@ userPassword varchar(255)           UNIQUE NOT NULL
 );
 
 create table accounts (
-userId NUMBER                       UNIQUE NOT NULL,
+userId NUMBER                       NOT NULL,
 bankAccountId NUMBER                PRIMARY KEY,
 accountBalance Numeric(10,2)        DEFAULT 0
 );
 
 create table transactions (
 transactionId NUMBER               PRIMARY KEY,
-bankAccountId NUMBER               UNIQUE NOT NULL,
-transactionType Numeric(10,2)      NOT NULL,
+bankAccountId NUMBER               NOT NULL,
+transactionType varchar(255)       NOT NULL,
 transactionAmt NUMBER              NOT NULL,
-transactionDate TIMESTAMP          DEFAULT CURRENT_TIMESTAMP
+transactionDate TIMESTAMP           DEFAULT CURRENT_TIMESTAMP
 );
 
 
@@ -56,7 +56,7 @@ transactionDate TIMESTAMP          DEFAULT CURRENT_TIMESTAMP
    Create Foreign Keys
 ********************************************************************************/
 
-ALTER TABLE accounts ADD CONSTRAINT fk_userId FOREIGN KEY (userId) REFERENCES bank_customer(userId);
+ALTER TABLE accounts ADD CONSTRAINT fk_userId FOREIGN KEY (userId) REFERENCES bank_customer(userId) ON DELETE CASCADE;
 ALTER TABLE transactions ADD CONSTRAINT fk_bankAccountId FOREIGN KEY (bankAccountId) REFERENCES accounts(bankAccountId);
 
 /*******************************************************************************
@@ -104,17 +104,18 @@ BEGIN
 END insertNewUser;
 
 CREATE OR REPLACE PROCEDURE insertTransaction ( 
-bAccId  IN varchar2,
+bAccId  IN NUMBER,
 tType   IN varchar2,
 tranAmt IN NUMBER,
-tranDt  IN DATE,
-tranId  OUT NUMBER)
+tranId  OUT NUMBER,
+tTime   OUT TIMESTAMP)
 IS
 BEGIN
     INSERT INTO transactions
-    (transactionId, bankAccountId, transactionType, transactionAmt, transactionDate)
-	VALUES (transactionIdSeq.nextval, bAccId, tType, tranAmt, tranDt);
+    (TRANSACTIONID, BANKACCOUNTID, TRANSACTIONTYPE, TRANSACTIONAMT, TRANSACTIONDATE)
+	VALUES (transactionIdSeq.nextval, bAccId, tType, tranAmt, CURRENT_TIMESTAMP );
     tranId := transactionIdSeq.currval;
+    tTime := CURRENT_TIMESTAMP;
     COMMIT;
 END insertTransaction;
 
@@ -178,14 +179,7 @@ CREATE OR REPLACE PROCEDURE deleteUser(
 usrid             IN NUMBER)
 IS
 Begin 
-    DELETE FROM bank_customer where usrid = userid;
+    DELETE FROM bank_customer where usrid = bank_customer.userid;
     COMMIT;
 END deleteUser;
 
-variable id number;
-exec viewAccount(1, :id) ;
-
-
-select * from accounts where userid = 23;
-
-select accountbalance from accounts where accounts.bankAccountId = 2

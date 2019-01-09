@@ -5,10 +5,17 @@ alter table accounts drop CONSTRAINT fk_bankAccountId;
 alter table transactions drop CONSTRAINT transactionsID_pk;
 alter table transactions drop CONSTRAINT fk_checkingsId;
 
+
 drop sequence userId;
 drop sequence bank_account_id;
 drop sequence transaction_id;
 
+drop procedure createaccount;
+drop procedure inserttransaction;
+drop procedure updateuserfirstname;
+drop procedure updateuserlastname;
+drop procedure updateusername;
+drop procedure updateuserpassword;
 drop procedure insertNewUser;
 drop procedure insertUserAccount;
 drop procedure insertTransactions;

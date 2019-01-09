@@ -8,7 +8,7 @@ public class User implements Serializable {
 	 * 
 	 */
 	private static final long serialVersionUID = 7929697647435750804L;
-	private int userId;
+	private Integer userId;
 	private String username;
 	private String userFirstName;
 	private String userLastName;
@@ -18,7 +18,7 @@ public class User implements Serializable {
 
 	}
 
-	public User(int userId, String username, String userFirstName, String userLastName, String userPassword) {
+	public User(Integer userId, String username, String userFirstName, String userLastName, String userPassword) {
 		super();
 		this.userFirstName = userFirstName;
 		this.userLastName = userLastName;
@@ -27,7 +27,7 @@ public class User implements Serializable {
 		this.userId = userId;
 	}
 
-	public int getUserId() {
+	public Integer getUserId() {
 		return userId;
 	}
 
@@ -111,6 +111,12 @@ public class User implements Serializable {
 		} else if (!username.equals(other.username))
 			return false;
 		return true;
+	}
+
+	@Override
+	public String toString() {
+		return "User [userId=" + userId + ", username=" + username + ", userFirstName=" + userFirstName
+				+ ", userLastName=" + userLastName + ", userPassword=" + userPassword + "]";
 	}
 
 }
