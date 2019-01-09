@@ -2,28 +2,28 @@ package com.revature.JdbcBank;
 
 public class Account {
 	
-	private int userId;
-	private int bankAccountId;
-	private double balance;
+	private Integer userId;
+	private Integer bankAccountId;
+	private Double balance;
 	
 	public Account() {
 	}
 
-	public Account(int userId, int bankAccountId, double balance) {
+	public Account(Integer userId, Integer bankAccountId, Double balance) {
 		super();
 		this.bankAccountId = bankAccountId;
 		this.balance = balance;
 	}
 
-	public int getBankAccountId() {
+	public Integer getBankAccountId() {
 		return bankAccountId;
 	}
 
-	public void setBankAccountId(int bankAccountId) {
+	public void setBankAccountId(Integer bankAccountId) {
 		this.bankAccountId = bankAccountId;
 	}
 
-	public double getBalance() {
+	public Double getBalance() {
 		return balance;
 	}
 
@@ -32,7 +32,7 @@ public class Account {
 	}
 
 
-	public int getUserId() {
+	public Integer getUserId() {
 		return userId;
 	}
 
@@ -42,7 +42,7 @@ public class Account {
 
 	@Override
 	public int hashCode() {
-		final int prime = 31;
+		final Integer prime = 31;
 		int result = 1;
 		result = (int) (prime * result + balance);
 		result = prime * result + bankAccountId;

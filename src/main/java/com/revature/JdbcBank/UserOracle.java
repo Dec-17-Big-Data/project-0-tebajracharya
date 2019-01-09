@@ -4,11 +4,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Types;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
@@ -26,21 +22,14 @@ public class UserOracle implements JdbcDao {
 
 	}
 
-	public static JdbcDao getDao() {
+	public static UserOracle getDao() {
 		if (userData == null) {
 			userData = new UserOracle();
 		}
 		return userData;
 	}
 
-	private static java.sql.Timestamp getCurrentTimeStamp() {
-
-		java.util.Date today = new java.util.Date();
-		return new java.sql.Timestamp(today.getTime());
-
-	}
-
-	public Optional<List<User>> checkUserExist(String username, String password) {
+	public Optional<User> checkUserExist(String username, String password) {
 		Connection con = ConnectionUtil.getConnection();
 		if (con == null) {
 			return Optional.empty();
@@ -53,20 +42,22 @@ public class UserOracle implements JdbcDao {
 			ps.setString(2, password);
 			ResultSet rs = ps.executeQuery();
 			
-			List<User> listOfUsers = new ArrayList<User>();
-
+			User usr = null;
 			while (rs.next()) {
-				listOfUsers.add(new User(rs.getInt("userid"), rs.getString("username"), rs.getString("userfirstname"),
-						rs.getString("userlastname"), rs.getString("userpassword")));
+				usr = new User(rs.getInt("userid"), rs.getString("username"), rs.getString("userfirstname"),
+						rs.getString("userlastname"), rs.getString("userpassword"));
 			}
-			return Optional.of(listOfUsers);
+			if (usr == null) {
+				return Optional.empty();
+			}
+			return Optional.of(usr);
 		} 
 		catch (SQLException e) {
 		}
-		return null;
+		return Optional.empty();
 	}
 
-	public Optional<Integer> createUser(String firstname, String lastname, String usrname, String usrpassword) {
+	public Optional<User> createUser(String firstname, String lastname, String usrname, String usrpassword) {
 		Connection con = ConnectionUtil.getConnection();
 		if (con == null) {
 			return Optional.empty();
@@ -79,41 +70,30 @@ public class UserOracle implements JdbcDao {
 			cs.setString(3, usrname);
 			cs.setString(4, usrpassword);
 			cs.registerOutParameter(5, java.sql.Types.INTEGER);
-			cs.executeUpdate();
-			int id = cs.getInt(5);
-			return Optional.of(id);
-		} catch (SQLException e) {
-		}
-		return null;
-	}
-
-	public Optional<List<User>> getAllUsers() {
-		Connection con = ConnectionUtil.getConnection();
-
-		if (con == null) {
-			return Optional.empty();
-		}
-
-		try {
-			String sql = "select * from bank_customer";
+			cs.execute();
+			
+			int usrId = cs.getInt(5);
+			
+			String sql = "Select * from bank_customer where userid = ?";
 			PreparedStatement ps = con.prepareStatement(sql);
+			ps.setInt(1, usrId);
 			ResultSet rs = ps.executeQuery();
-
-			List<User> listOfUsers = new ArrayList<User>();
-
+			
+			User usr = null;
 			while (rs.next()) {
-				listOfUsers.add(new User(rs.getInt("userid"), rs.getString("username"), rs.getString("userfirstname"),
-						rs.getString("userlastname"), rs.getString("userpassword")));
+				usr = new User(rs.getInt("userid"), rs.getString("username"), rs.getString("userfirstname"),
+						rs.getString("userlastname"), rs.getString("userpassword"));
 			}
-
-			return Optional.of(listOfUsers);
-		} catch (SQLException e) {
-
+			if (usr == null) {
+				return Optional.empty();
+			}
+			return Optional.of(usr);			
+			} catch (SQLException e) {
 		}
-		return null;
+		return Optional.empty();
 	}
 	
-	public boolean updateUser(int userId) {
+	public Boolean updateUser(int userId) {
 		System.out.println("Enter update field");
 		System.out.println("1. Username");
 		System.out.println("2. Password");
@@ -164,7 +144,7 @@ public class UserOracle implements JdbcDao {
 	}
 	
 	
-	public boolean deleteUser(int userId) {
+	public Boolean deleteUser(int userId) {
 		Connection con = ConnectionUtil.getConnection();
 		if (con == null) {
 			return false;
@@ -183,7 +163,7 @@ public class UserOracle implements JdbcDao {
 	public Optional<Account> createAccount(int userId) {
 		Connection con = ConnectionUtil.getConnection();
 		if (con == null) {
-			return null;
+			return Optional.empty();
 		}
 		try {
 			CallableStatement cs = con.prepareCall("{call createAccount(?,?)");
@@ -198,7 +178,7 @@ public class UserOracle implements JdbcDao {
 		} catch (SQLException e) {
 
 		}
-		return null;
+		return Optional.empty();
 	}
 
 	public Optional<List<Account>> viewAccount(int userId) {
@@ -228,7 +208,7 @@ public class UserOracle implements JdbcDao {
 	public Optional<List<Transaction>> transactionDeposit(int bankAccntId, double deposit) {
 		Connection con = ConnectionUtil.getConnection();
 		if (con == null) {
-			return null;
+			return Optional.empty();
 		}
 		try {	
 			String sql = "select accountbalance from accounts where accounts.bankAccountId = ?";
@@ -244,30 +224,97 @@ public class UserOracle implements JdbcDao {
 			PreparedStatement ps2 = con.prepareStatement(sql2);
 			ps2.setDouble(1, newBalance);
 			ps2.setInt(2, bankAccntId);
-			ResultSet rs2 = ps2.executeQuery();
+			ps2.executeQuery();
 			
-			List<Transaction> listOfTransaction =  new ArrayList<Transaction>();
-			while(rs2.next()) {
-				listOfTransaction.add(new Transaction(rs2.getInt("transactionid"), rs2.getInt("bankaccountid"), rs2.getString("transaction_type"), rs2.getDouble("trasactionamt"), rs2.getDate("transactiondate")));
-			}
-			
-			CallableStatement cs = con.prepareCall("{call insertTransaction(?,?,?,?,?)");
+			CallableStatement cs = con.prepareCall("call insertTransaction(?,?,?,?,?)");
 			cs.setInt(1, bankAccntId);
 			cs.setString(2, "Deposit");
 			cs.setDouble(3, deposit);
-			cs.setTimestamp(4, java.sql.Timestamp.from(java.time.Instant.now()));
-			cs.executeQuery();
+			cs.registerOutParameter(4, java.sql.Types.INTEGER);
+			cs.registerOutParameter(5, java.sql.Types.TIMESTAMP);
+			cs.executeQuery();	
+			
+			int transactionId = cs.getInt(4);
+			String sql3 = "select * from transactions where transactions.bankAccountId = ? and transactions.transactionid = ?";
+			PreparedStatement ps3 = con.prepareStatement(sql3);
+			ps3.setInt(1, bankAccntId);
+			ps3.setInt(2, transactionId);
+			ResultSet rs3 = ps3.executeQuery();
+			
+			List<Transaction> listOfTransaction =  new ArrayList<Transaction>();
+	
+			while(rs3.next()) {
+				listOfTransaction.add(new Transaction(rs3.getInt("TRANSACTIONID"), rs3.getInt("BANKACCOUNTID"), rs3.getString("TRANSACTIONTYPE"), rs3.getDouble("TRANSACTIONAMT"), rs3.getTimestamp("TRANSACTIONDATE")));
+			}
 			
 			return Optional.of(listOfTransaction);
 		} catch (SQLException e) {
 		}
-		return null;
+		return Optional.empty();
 	}
+	
+	public Optional<List<Transaction>> transactionWithdraw(int bankAccntId, double withdraw) {
+		Connection con = ConnectionUtil.getConnection();
+		if (con == null) {
+			return Optional.empty();
+		}
+		try {	
+			String sql = "select accountbalance from accounts where accounts.bankAccountId = ?";
+			PreparedStatement ps = con.prepareStatement(sql);
+			ps.setInt(1, bankAccntId);
+			ResultSet rs = ps.executeQuery();
+			double newBalance = 0;
+			System.out.println(rs.getDouble("accountbalance"));
+			if (rs.getDouble("accountbalance") - withdraw <= 0) 
+			{
+				return Optional.empty();
+			}
+			else 
+			{
+				
+				while(rs.next()) {
+					newBalance = rs.getDouble("accountbalance") - withdraw;
+				}
+				
+				String sql2 = "Update accounts set accountbalance = ? where accounts.bankAccountId = ?";
+				PreparedStatement ps2 = con.prepareStatement(sql2);
+				ps2.setDouble(1, newBalance);
+				ps2.setInt(2, bankAccntId);
+				ps2.executeQuery();
+			
+				CallableStatement cs = con.prepareCall("call insertTransaction(?,?,?,?,?)");
+				cs.setInt(1, bankAccntId);
+				cs.setString(2, "Withdraw");
+				cs.setDouble(3, withdraw);
+				cs.registerOutParameter(4, java.sql.Types.INTEGER);
+				cs.registerOutParameter(5, java.sql.Types.TIMESTAMP);
+				cs.executeQuery();	
+			
+				int transactionId = cs.getInt(4);
+				String sql3 = "select * from transactions where transactions.bankAccountId = ? and transactions.transactionid = ?";
+				PreparedStatement ps3 = con.prepareStatement(sql3);
+				ps3.setInt(1, bankAccntId);
+				ps3.setInt(2, transactionId);
+				ResultSet rs3 = ps3.executeQuery();
+			
+				List<Transaction> listOfTransaction =  new ArrayList<Transaction>();
+				
+				while(rs3.next()) {
+					listOfTransaction.add(new Transaction(rs3.getInt("TRANSACTIONID"), rs3.getInt("BANKACCOUNTID"), rs3.getString("TRANSACTIONTYPE"), rs3.getDouble("TRANSACTIONAMT"), rs3.getTimestamp("TRANSACTIONDATE")));
+				}
+				
+				return Optional.of(listOfTransaction);
+			} 
+		}
+		catch (SQLException e) {
+		}
+		return Optional.empty();
+	}	
 	
 	public Optional<List<Account>> accountBalance(int bankAccntId) {
 		Connection con = ConnectionUtil.getConnection();
 		if (con == null) {
-			return null;
+			return Optional.empty();
 		}
 		try {	
 			String sql = "select accountbalance from accounts where accounts.bankAccountId = ?";
@@ -283,54 +330,57 @@ public class UserOracle implements JdbcDao {
 		}
 		catch (SQLException e) {
 		}
-		return null;
+		return Optional.empty();
 	}
 	
-	public Optional<List<Transaction>> transactionWithdraw(int bankAccntId, double withdraw) {
+	public Optional<List<User>> getAllUsers() {
+		Connection con = ConnectionUtil.getConnection();
+
+		if (con == null) {
+			return Optional.empty();
+		}
+
+		try {
+			String sql = "select * from bank_customer";
+			PreparedStatement ps = con.prepareStatement(sql);
+			ResultSet rs = ps.executeQuery();
+
+			List<User> listOfUsers = new ArrayList<User>();
+
+			while (rs.next()) {
+				listOfUsers.add(new User(rs.getInt("userid"), rs.getString("username"), rs.getString("userfirstname"),
+						rs.getString("userlastname"), rs.getString("userpassword")));
+			}
+
+			return Optional.of(listOfUsers);
+		} catch (SQLException e) {
+
+		}
+		return Optional.empty();
+	}
+	
+	public Optional<List<Transaction>> viewTransactions(int bankAccntId) {
 		Connection con = ConnectionUtil.getConnection();
 		if (con == null) {
-			return null;
+			return Optional.empty();
 		}
-		try {	
-			String sql = "select accountbalance from accounts where accounts.bankAccountId = ?";
+		try {
+			String sql = "select * from transactions where transactions.bankAccountId = ?";
 			PreparedStatement ps = con.prepareStatement(sql);
 			ps.setInt(1, bankAccntId);
 			ResultSet rs = ps.executeQuery();
-			double newBalance = 0;
 			
-			while(rs.next()) {
-				newBalance = rs.getDouble("accountbalance") - withdraw;
+			List<Transaction> listOfTransactions =  new ArrayList<Transaction>();
+			
+			while (rs.next()) {
+				listOfTransactions.add(new Transaction(rs.getInt("TRANSACTIONID"), rs.getInt("BANKACCOUNTID"), rs.getString("TRANSACTIONTYPE"), rs.getDouble("TRANSACTIONAMT"), rs.getTimestamp("TRANSACTIONDATE")));	
 			}
 			
-			/*String sql1 = "Update accounts set accountbalance = ? where accounts.bankAccountId = ?";
-			PreparedStatement ps1 = con.prepareStatement(sql1);
-			ps1.setDouble(1, newBalance);
-			ps1.setInt(2, bankAccntId);
-			ResultSet rs2 = ps1.executeQuery();
-			
-			CallableStatement cs = con.prepareCall("{call insertTransaction(?,?,?,?,?)");
-			cs.setInt(1, bankAccntId);
-			cs.setString(2, "Withdraw");
-			cs.setDouble(3, withdraw);
-			//cs. setDate
-			cs.executeQuery();
-			
-			Transaction tr = null;
-			tr = new Transaction(cs.getInt(1), bankAccntId, "Withdraw", withdraw, date);
-			
-			
-			List<Transaction> listOfTransaction =  new ArrayList<Transaction>();
-			while(rs2.next()) {
-				listOfTransaction.add(new Transaction(rs2.getInt("transactionid"), rs2.getInt("bankaccountid"), rs2.getString("transaction_type"), rs2.getDouble("trasactionamt"), rs2.getDate("transactiondate")));
-			}
-			return Optional.of(listOfTransaction);*/
-			return null;
+			return Optional.of(listOfTransactions);
 		} catch (SQLException e) {
+
 		}
-		return null;
+		return Optional.empty();
 	}
-	
-	
-	
 }
 
